@@ -32,6 +32,13 @@ class CountingObject:
         self.total_spent += (new_amount - self.last_spent_amount)
         self.last_spent_amount = new_amount
 
+    def edit_days_passed(self, new_days):
+        """Метод для изменения количества прошедших дней."""
+        if new_days < 0:
+            raise ValueError("Количество дней не может быть отрицательным.")
+
+        self.days_passed = new_days
+
     def return_data(self):
         """Строковое представление объекта для удобного вывода информации."""
         return (f"Дней прошло: {self.days_passed}, "
@@ -84,6 +91,18 @@ async def edit_value(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         await update.message.reply_text(user_data[user_id].return_data())
     except (IndexError, ValueError):
         await update.message.reply_text("Пожалуйста, введите корректную сумму для редактирования.")
+async def edit_day(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = update.message.from_user.id
+    if user_id not in user_data:
+        await update.message.reply_text("Сначала установите свою зарплату с помощью команды /set_salary <сумма>.")
+        return
+
+    try:
+        new_days = int(context.args[0])
+        user_data[user_id].edit_days_passed(new_days)
+        await update.message.reply_text(user_data[user_id].return_data())
+    except (IndexError, ValueError):
+        await update.message.reply_text("Пожалуйста, введите корректное количество дней.")
 
 
 def main() -> None:
@@ -94,10 +113,10 @@ def main() -> None:
     application.add_handler(CommandHandler("set_salary", set_salary))
     application.add_handler(CommandHandler("spend", spend))
     application.add_handler(CommandHandler("edit_value", edit_value))
+    application.add_handler(CommandHandler("edit_day", edit_day))
 
     application.run_polling()
 
 
 if __name__ == '__main__':
     main()
-
